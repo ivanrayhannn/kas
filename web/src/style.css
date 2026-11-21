@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* Warna: kertas buku kas, tinta hijau tua, hijau = uang masuk, bata = uang keluar. */
+:root {
+  --paper: #f6f3ea;
+  --surface: #fffdf7;
+  --ink: #1c2620;
+  --muted: #55605a;
+  --line: #e2dccd;
+  --masuk: #1b6943;
+  --masuk-soft: #e2efe6;
+  --keluar: #a33d27;
+  --keluar-soft: #f6e3dc;
+  --warn: #6f4700;
+  --warn-soft: #fbedc8;
+  --on-ink: #f6f3ea;
+  --focus: #1b6943;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121814;
+    --surface: #1a221d;
+    --ink: #edf0ea;
+    --muted: #a6b0a9;
+    --line: #2d3832;
+    --masuk: #74cf9c;
+    --masuk-soft: #17301f;
+    --keluar: #f29a80;
+    --keluar-soft: #3a2119;
+    --warn: #f1c868;
+    --warn-soft: #33280e;
+    --on-ink: #121814;
+    --focus: #74cf9c;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-masuk: var(--masuk);
+  --color-masuk-soft: var(--masuk-soft);
+  --color-keluar: var(--keluar);
+  --color-keluar-soft: var(--keluar-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-on-ink: var(--on-ink);
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 1;
+  }
+  a[href], button:not(:disabled), summary, select, label[for], [role="button"], [role="tab"],
+  input[type="checkbox"], input[type="radio"], input[type="file"] { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+  input, select, textarea { font: inherit; color: inherit; }
+  dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .field {
+    width: 100%; min-height: 48px; padding: 0 14px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .field:focus { border-color: var(--focus); outline: 2px solid var(--focus); outline-offset: 0; }
+  .label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 6px; }
+  .hint { font-size: 0.8125rem; color: var(--muted); margin-top: 6px; }
+  .error-text { font-size: 0.8125rem; color: var(--keluar); margin-top: 6px; font-weight: 600; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 0 18px; border-radius: 10px; font-weight: 700;
+    transition: transform 80ms ease, background-color 120ms ease, opacity 120ms ease;
+  }
+  .btn:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+  .btn:disabled { opacity: 0.45; }
+  .btn-primary { background: var(--ink); color: var(--on-ink); }
+  .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 86%, var(--masuk)); }
+  .btn-ghost { background: transparent; border: 1px solid var(--line); }
+  .btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--line) 45%, transparent); }
+  .btn-masuk { background: var(--masuk); color: var(--on-ink); }
+  .btn-masuk:hover:not(:disabled) { background: color-mix(in srgb, var(--masuk) 88%, var(--ink)); }
+  .btn-keluar { background: var(--keluar); color: var(--on-ink); }
+  .btn-keluar:hover:not(:disabled) { background: color-mix(in srgb, var(--keluar) 88%, var(--ink)); }
+  .btn-danger { color: var(--keluar); border: 1px solid color-mix(in srgb, var(--keluar) 40%, var(--line)); }
+  .btn-danger:hover:not(:disabled) { background: var(--keluar-soft); }
+
+  .chip {
+    min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--surface); font-weight: 600; font-size: 0.9375rem;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed="true"], .chip[aria-selected="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+
+  /* Motif buku kas: angka rupiah selalu berangka tabel, baris dipisah garis tipis. */
+  .ledger > * + * { border-top: 1px solid var(--line); }
+  .amount { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; white-space: nowrap; }
+  .sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card { border-color: #bbb; }
+}
