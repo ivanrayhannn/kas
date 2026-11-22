@@ -1,19 +1,21 @@
 import os
 import uuid
 from datetime import date, datetime, timezone
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy import (
-    BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, create_engine,
+    BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 from sqlalchemy.pool import NullPool
 
-# Lokal: SQLite. Produksi: isi DATABASE_URL dengan connection string Supabase Postgres.
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./kas.db")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len("postgresql://"):]
+# Lokal: SQLite. Produksi: DATABASE_URL, atau POSTGRES_URL yang diisi otomatis oleh integrasi Supabase di Vercel.
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or "sqlite:///./kas.db"
+if DATABASE_URL.startswith(("postgres://", "postgresql://")):
+    u = urlsplit(DATABASE_URL)
+    # Integrasi menambah parameter seperti "supa=base-pooler.x" yang ditolak psycopg; sisakan sslmode saja.
+    query = urlencode([(k, v) for k, v in parse_qsl(u.query) if k == "sslmode"])
+    DATABASE_URL = urlunsplit(("postgresql+psycopg", u.netloc, u.path, query, ""))
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -132,3 +134,9 @@ class ShoppingItem(Base):
 
 def init_db() -> None:
     Base.metadata.create_all(engine)
+    if engine.dialect.name == "postgresql":
+        # Supabase membuka schema public lewat REST API dengan kunci anon yang publik. RLS tanpa policy
+        # menutup jalur itu; API ini tetap bisa akses karena terhubung sebagai pemilik tabel.
+        with engine.begin() as conn:
+            for table in Base.metadata.sorted_tables:
+                conn.execute(text(f'alter table "{table.name}" enable row level security'))
