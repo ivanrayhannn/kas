@@ -123,7 +123,7 @@ def send_reset_email(to: str, link: str) -> bool:
 
 
 @app.post("/api/auth/forgot")
-def forgot(body: ForgotIn, db: Session = Depends(get_db)):
+def forgot(body: ForgotIn, request: Request, db: Session = Depends(get_db)):
     # Jawaban selalu sama, supaya orang lain tidak bisa menebak email mana yang terdaftar.
     hasil = {"message": "Bila email terdaftar, tautan untuk membuat kata sandi baru sudah dikirim."}
     user = db.scalar(select(User).where(User.email == body.email.lower()))
@@ -133,7 +133,9 @@ def forgot(body: ForgotIn, db: Session = Depends(get_db)):
     user.reset_token_hash = sha256(token)
     user.reset_expires_at = now() + timedelta(hours=1)
     db.commit()
-    link = f"{os.getenv('APP_URL', 'http://localhost:5173')}/atur-ulang-sandi?token={token}"
+    # Web dan API berbagi satu domain, jadi Origin permintaan adalah alamat aplikasi.
+    base = os.getenv("APP_URL") or request.headers.get("origin") or "http://localhost:5173"
+    link = f"{base.rstrip('/')}/atur-ulang-sandi?token={token}"
     try:
         terkirim = send_reset_email(user.email, link)
     except Exception:

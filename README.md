@@ -55,11 +55,18 @@ node e2e/flow.cjs
 | `APP_ENV` | ya | `production` |
 | `SECRET_KEY` | ya | teks acak panjang (minimal 32 karakter) untuk menandatangani sesi |
 | `DATABASE_URL` | ya | connection string Postgres, mis. dari Supabase (Project Settings, Database) |
-| `APP_URL` | ya | alamat aplikasi, untuk tautan atur ulang kata sandi |
+| `APP_URL` | tidak | alamat aplikasi, untuk tautan atur ulang kata sandi |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | untuk lupa sandi | server email pengirim tautan atur ulang |
 
 Tabel dibuat otomatis saat API pertama kali berjalan.
 
 ## Deploy ke Vercel
 
-`vercel.json` membangun `web/` sebagai situs statis dan menjalankan `api/index.py` sebagai fungsi Python untuk semua `/api/*`. Isi variabel lingkungan di atas di dashboard Vercel. SQLite tidak bisa dipakai di Vercel (disknya tidak permanen), jadi `DATABASE_URL` wajib diisi Postgres.
+Satu proyek Vercel dengan dua *services* (lihat `vercel.json`):
+
+| Service | Folder | Framework | Alamat publik |
+|---|---|---|---|
+| `web` | `web/` | Vite (PWA statis) | `/` dan semua halaman lain; tautan langsung seperti `/riwayat` diarahkan ke `index.html` |
+| `app` | `.` (titik masuk `api/index.py`) | FastAPI | `/api/*`, path diteruskan utuh |
+
+Browser memanggil `/api` di domain yang sama, jadi tidak ada panggilan antar-service di server dan tidak perlu *binding*. Isi variabel lingkungan di atas di dashboard Vercel. SQLite tidak bisa dipakai di Vercel (disknya tidak permanen), jadi `DATABASE_URL` wajib diisi Postgres. `APP_URL` boleh dikosongkan: tautan atur ulang sandi memakai alamat situs yang sedang dibuka.

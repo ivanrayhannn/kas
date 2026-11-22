@@ -208,3 +208,10 @@ def test_tanggal_mengikuti_zona_waktu_ponsel(c):
     r = c.post("/api/transactions", headers=hz, json=body)
     assert r.status_code == 200 and r.json()["summary"]["hari_ini"]["tanggal"] == lokal
     assert c.get("/api/summary", headers={**h, "x-timezone": "bukan/zona"}).status_code == 200
+
+
+def test_tautan_atur_ulang_memakai_origin(c):
+    owner(c)
+    r = c.post("/api/auth/forgot", json={"email": "pemilik@resto.example"},
+               headers={"origin": "https://kas.example"}).json()
+    assert r["dev_reset_url"].startswith("https://kas.example/atur-ulang-sandi?token=")
