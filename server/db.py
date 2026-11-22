@@ -6,6 +6,7 @@ from sqlalchemy import (
     BigInteger, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, create_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
+from sqlalchemy.pool import NullPool
 
 # Lokal: SQLite. Produksi: isi DATABASE_URL dengan connection string Supabase Postgres.
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./kas.db")
@@ -14,11 +15,12 @@ if DATABASE_URL.startswith("postgres://"):
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len("postgresql://"):]
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
-    pool_pre_ping=True,
-)
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    # Supabase Transaction pooler (port 6543) sudah mengelola pool dan tidak mendukung prepared statement,
+    # jadi fungsi serverless tidak menahan koneksi dan psycopg tidak membuat prepared statement.
+    engine = create_engine(DATABASE_URL, poolclass=NullPool, connect_args={"prepare_threshold": None})
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
